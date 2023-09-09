@@ -9,6 +9,7 @@ sudo /usr/sbin/nginx -t  # nginxの設定ファイルの構文チェック
 
 # mysql
 sudo cp mysql/my.cnf /etc/mysql/my.cnf
+sudo systemctl restart mysql
 
 # build
 cd golang
