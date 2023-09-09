@@ -12,7 +12,7 @@ sudo cp etc/my.cnf /etc/mysql/my.cnf
 
 # build
 cd golang
-go build -o app
+/home/isucon/.local/go/bin/go build -o app
 
 # restart
 sudo systemctl reload nginx
