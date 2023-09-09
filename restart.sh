@@ -4,7 +4,8 @@ cd /home/isucon/private_isu/webapp
 git pull
 
 # niginx
-sudo cp -r etc/nginx/conf.d/ /etc/nginx/conf.d/
+sudo cp etc/nginx/conf.d/* /etc/nginx/conf.d/
+sudo cp etc/nginx/nginx.conf /etc/nginx/nginx.conf
 sudo /usr/sbin/nginx -t  # nginxの設定ファイルの構文チェック
 
 # mysql
