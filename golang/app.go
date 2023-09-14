@@ -33,6 +33,7 @@ const (
 	postsPerPage  = 20
 	ISO8601Format = "2006-01-02T15:04:05-07:00"
 	UploadLimit   = 10 * 1024 * 1024 // 10mb
+	ImageDir      = "../public/image"
 )
 
 type User struct {
@@ -383,22 +384,22 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 
-	err := db.Select(&results, "SELECT " +
-		"p.id AS `id`, " +
-		"p.user_id AS `user_id`, " +
-		"p.body AS `body`, " +
-		"p.mime AS `mime`, " +
-		"p.created_at AS `created_at`, " +
-		"u.id AS `user.id`, " +
-		"u.account_name AS `user.account_name`, " +
-		"u.passhash AS `user.passhash`, " +
-		"u.authority AS `user.authority`, " +
-		"u.del_flg AS `user.del_flg`, " +
-		"u.created_at AS `user.created_at` " +
-		"FROM `posts` AS p " +
-		"INNER JOIN `users` AS u ON p.user_id = u.id " +
-		"WHERE u.del_flg = 0 " +
-		"ORDER BY p.created_at DESC " +
+	err := db.Select(&results, "SELECT "+
+		"p.id AS `id`, "+
+		"p.user_id AS `user_id`, "+
+		"p.body AS `body`, "+
+		"p.mime AS `mime`, "+
+		"p.created_at AS `created_at`, "+
+		"u.id AS `user.id`, "+
+		"u.account_name AS `user.account_name`, "+
+		"u.passhash AS `user.passhash`, "+
+		"u.authority AS `user.authority`, "+
+		"u.del_flg AS `user.del_flg`, "+
+		"u.created_at AS `user.created_at` "+
+		"FROM `posts` AS p "+
+		"INNER JOIN `users` AS u ON p.user_id = u.id "+
+		"WHERE u.del_flg = 0 "+
+		"ORDER BY p.created_at DESC "+
 		"LIMIT ?", postsPerPage)
 	if err != nil {
 		log.Print(err)
@@ -445,22 +446,22 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 
-	err = db.Select(&results, "SELECT " +
-		"p.id AS `id`, " +
-		"p.user_id AS `user_id`, " +
-		"p.body AS `body`, " +
-		"p.mime AS `mime`, " +
-		"p.created_at AS `created_at`, " +
-		"u.id AS `user.id`, " +
-		"u.account_name AS `user.account_name`, " +
-		"u.passhash AS `user.passhash`, " +
-		"u.authority AS `user.authority`, " +
-		"u.del_flg AS `user.del_flg`, " +
-		"u.created_at AS `user.created_at` " +
-		"FROM `posts` AS p " +
-		"INNER JOIN `users` AS u ON p.user_id = u.id " +
-		"WHERE p.user_id = ? AND u.del_flg = 0 " +
-		"ORDER BY p.created_at DESC " +
+	err = db.Select(&results, "SELECT "+
+		"p.id AS `id`, "+
+		"p.user_id AS `user_id`, "+
+		"p.body AS `body`, "+
+		"p.mime AS `mime`, "+
+		"p.created_at AS `created_at`, "+
+		"u.id AS `user.id`, "+
+		"u.account_name AS `user.account_name`, "+
+		"u.passhash AS `user.passhash`, "+
+		"u.authority AS `user.authority`, "+
+		"u.del_flg AS `user.del_flg`, "+
+		"u.created_at AS `user.created_at` "+
+		"FROM `posts` AS p "+
+		"INNER JOIN `users` AS u ON p.user_id = u.id "+
+		"WHERE p.user_id = ? AND u.del_flg = 0 "+
+		"ORDER BY p.created_at DESC "+
 		"LIMIT ?", user.ID, postsPerPage)
 	if err != nil {
 		log.Print(err)
@@ -553,22 +554,22 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := []Post{}
-	err = db.Select(&results, "SELECT " +
-		"p.id AS `id`, " +
-		"p.user_id AS `user_id`, " +
-		"p.body AS `body`, " +
-		"p.mime AS `mime`, " +
-		"p.created_at AS `created_at`, " +
-		"u.id AS `user.id`, " +
-		"u.account_name AS `user.account_name`, " +
-		"u.passhash AS `user.passhash`, " +
-		"u.authority AS `user.authority`, " +
-		"u.del_flg AS `user.del_flg`, " +
-		"u.created_at AS `user.created_at` " +
-		"FROM `posts` AS p " +
-		"INNER JOIN `users` AS u ON p.user_id = u.id " +
-		"WHERE p.created_at <= ? AND u.del_flg = 0 " +
-		"ORDER BY p.created_at DESC " +
+	err = db.Select(&results, "SELECT "+
+		"p.id AS `id`, "+
+		"p.user_id AS `user_id`, "+
+		"p.body AS `body`, "+
+		"p.mime AS `mime`, "+
+		"p.created_at AS `created_at`, "+
+		"u.id AS `user.id`, "+
+		"u.account_name AS `user.account_name`, "+
+		"u.passhash AS `user.passhash`, "+
+		"u.authority AS `user.authority`, "+
+		"u.del_flg AS `user.del_flg`, "+
+		"u.created_at AS `user.created_at` "+
+		"FROM `posts` AS p "+
+		"INNER JOIN `users` AS u ON p.user_id = u.id "+
+		"WHERE p.created_at <= ? AND u.del_flg = 0 "+
+		"ORDER BY p.created_at DESC "+
 		"LIMIT ?", t.Format(ISO8601Format), postsPerPage)
 	if err != nil {
 		log.Print(err)
@@ -605,21 +606,21 @@ func getPostsID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := []Post{}
-	err = db.Select(&results, "SELECT " +
-		"p.id AS `id`, " +
-		"p.user_id AS `user_id`, " +
-		"p.body AS `body`, " +
-		"p.mime AS `mime`, " +
-		"p.created_at AS `created_at`, " +
-		"u.id AS `user.id`, " +
-		"u.account_name AS `user.account_name`, " +
-		"u.passhash AS `user.passhash`, " +
-		"u.authority AS `user.authority`, " +
-		"u.del_flg AS `user.del_flg`, " +
-		"u.created_at AS `user.created_at` " +
-		"FROM `posts` AS p " +
-		"INNER JOIN `users` AS u ON p.user_id = u.id " +
-		"WHERE p.id = ? AND u.del_flg = 0 " +
+	err = db.Select(&results, "SELECT "+
+		"p.id AS `id`, "+
+		"p.user_id AS `user_id`, "+
+		"p.body AS `body`, "+
+		"p.mime AS `mime`, "+
+		"p.created_at AS `created_at`, "+
+		"u.id AS `user.id`, "+
+		"u.account_name AS `user.account_name`, "+
+		"u.passhash AS `user.passhash`, "+
+		"u.authority AS `user.authority`, "+
+		"u.del_flg AS `user.del_flg`, "+
+		"u.created_at AS `user.created_at` "+
+		"FROM `posts` AS p "+
+		"INNER JOIN `users` AS u ON p.user_id = u.id "+
+		"WHERE p.id = ? AND u.del_flg = 0 "+
 		"LIMIT 1", pid)
 	if err != nil {
 		log.Print(err)
@@ -678,15 +679,19 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mime := ""
+	ext := ""
 	if file != nil {
 		// 投稿のContent-Typeからファイルのタイプを決定する
 		contentType := header.Header["Content-Type"][0]
 		if strings.Contains(contentType, "jpeg") {
 			mime = "image/jpeg"
+			ext = "jpg"
 		} else if strings.Contains(contentType, "png") {
 			mime = "image/png"
+			ext = "png"
 		} else if strings.Contains(contentType, "gif") {
 			mime = "image/gif"
+			ext = "gif"
 		} else {
 			session := getSession(r)
 			session.Values["notice"] = "投稿できる画像形式はjpgとpngとgifだけです"
@@ -717,7 +722,7 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		query,
 		me.ID,
 		mime,
-		filedata,
+		"", // 画像はDBに保存しない
 		r.FormValue("body"),
 	)
 	if err != nil {
@@ -726,6 +731,14 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pid, err := result.LastInsertId()
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	// 画像をファイルに保存する
+	imgFile := path.Join(ImageDir, fmt.Sprintf("/%d.%s", pid, ext))
+	err = os.WriteFile(imgFile, filedata, 0644)
 	if err != nil {
 		log.Print(err)
 		return
@@ -762,6 +775,15 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	imgFile := path.Join(ImageDir, fmt.Sprintf("/%d.%s", post.ID, ext))
+	f, err := os.Open(imgFile)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	defer f.Close()
+	f.Write(post.Imgdata)
 
 	w.WriteHeader(http.StatusNotFound)
 }

@@ -3,3 +3,4 @@ node/
 php/
 ruby/
 bench_from_local.sh
+public/image/
