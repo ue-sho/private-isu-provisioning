@@ -30,6 +30,44 @@ var (
 	store *gsm.MemcacheStore
 )
 
+var (
+	loginTemplate = template.Must(template.ParseFiles(
+		getTemplPath("layout.html"),
+		getTemplPath("login.html"),
+	))
+
+	registerTemplate = template.Must(template.ParseFiles(
+		getTemplPath("layout.html"),
+		getTemplPath("register.html"),
+	))
+
+	userTemplate = template.Must(template.New("layout.html").Funcs(template.FuncMap{
+		"imageURL": imageURL,
+	}).ParseFiles(
+		getTemplPath("layout.html"),
+		getTemplPath("user.html"),
+		getTemplPath("posts.html"),
+		getTemplPath("post.html"),
+	))
+
+	postIDTemplate = template.Must(template.New("layout.html").Funcs(template.FuncMap{
+		"imageURL": imageURL,
+	}).ParseFiles(
+		getTemplPath("layout.html"),
+		getTemplPath("post_id.html"),
+		getTemplPath("post.html"),
+	))
+
+	indexTemplate = template.Must(template.New("layout.html").Funcs(template.FuncMap{
+		"imageURL": imageURL,
+	}).ParseFiles(
+		getTemplPath("layout.html"),
+		getTemplPath("index.html"),
+		getTemplPath("posts.html"),
+		getTemplPath("post.html"),
+	))
+)
+
 const (
 	postsPerPage  = 20
 	ISO8601Format = "2006-01-02T15:04:05-07:00"
@@ -265,10 +303,7 @@ func getLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	template.Must(template.ParseFiles(
-		getTemplPath("layout.html"),
-		getTemplPath("login.html")),
-	).Execute(w, struct {
+	loginTemplate.Execute(w, struct {
 		Me    User
 		Flash string
 	}{me, getFlash(w, r, "notice")})
@@ -304,10 +339,7 @@ func getRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	template.Must(template.ParseFiles(
-		getTemplPath("layout.html"),
-		getTemplPath("register.html")),
-	).Execute(w, struct {
+	registerTemplate.Execute(w, struct {
 		Me    User
 		Flash string
 	}{User{}, getFlash(w, r, "notice")})
@@ -406,16 +438,7 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmap := template.FuncMap{
-		"imageURL": imageURL,
-	}
-
-	template.Must(template.New("layout.html").Funcs(fmap).ParseFiles(
-		getTemplPath("layout.html"),
-		getTemplPath("index.html"),
-		getTemplPath("posts.html"),
-		getTemplPath("post.html"),
-	)).Execute(w, struct {
+	indexTemplate.Execute(w, struct {
 		Posts     []Post
 		Me        User
 		CSRFToken string
@@ -510,16 +533,7 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 
 	me := getSessionUser(r)
 
-	fmap := template.FuncMap{
-		"imageURL": imageURL,
-	}
-
-	template.Must(template.New("layout.html").Funcs(fmap).ParseFiles(
-		getTemplPath("layout.html"),
-		getTemplPath("user.html"),
-		getTemplPath("posts.html"),
-		getTemplPath("post.html"),
-	)).Execute(w, struct {
+	userTemplate.Execute(w, struct {
 		Posts          []Post
 		User           User
 		PostCount      int
@@ -636,15 +650,7 @@ func getPostsID(w http.ResponseWriter, r *http.Request) {
 
 	me := getSessionUser(r)
 
-	fmap := template.FuncMap{
-		"imageURL": imageURL,
-	}
-
-	template.Must(template.New("layout.html").Funcs(fmap).ParseFiles(
-		getTemplPath("layout.html"),
-		getTemplPath("post_id.html"),
-		getTemplPath("post.html"),
-	)).Execute(w, struct {
+	postIDTemplate.Execute(w, struct {
 		Post Post
 		Me   User
 	}{p, me})
