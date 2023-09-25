@@ -17,17 +17,21 @@ import (
 
 	"crypto/sha512"
 
+	"sync"
+
 	"github.com/bradfitz/gomemcache/memcache"
 	gsm "github.com/bradleypeabody/gorilla-sessions-memcache"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/sync/singleflight"
 )
 
 var (
 	db    *sqlx.DB
 	store *gsm.MemcacheStore
+	sf    = singleflight.Group{}
 )
 
 var (
@@ -66,6 +70,13 @@ var (
 		getTemplPath("posts.html"),
 		getTemplPath("post.html"),
 	))
+)
+
+var (
+	indexPosts      = []Post{}
+	indexPostsMutex = sync.RWMutex{}
+	lastUpdated     = time.Now()
+	lastTriggered   = time.Now()
 )
 
 const (
@@ -405,37 +416,72 @@ func getLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+func updateIndexPosts() ([]Post, error) {
+	indexPostsMutex.RLock()
+	if lastUpdated.After(lastTriggered) {
+		defer indexPostsMutex.RUnlock()
+		return indexPosts, nil
+	}
+	indexPostsMutex.RUnlock()
+
+	_, err, _ := sf.Do("indexPosts", func() (interface{}, error) {
+		indexPostsMutex.Lock()
+		lastTriggered = time.Now()
+		defer indexPostsMutex.Unlock()
+		results := []Post{}
+
+		err := db.Select(&results, "SELECT "+
+			"p.id AS `id`, "+
+			"p.user_id AS `user_id`, "+
+			"p.body AS `body`, "+
+			"p.mime AS `mime`, "+
+			"p.created_at AS `created_at`, "+
+			"u.id AS `user.id`, "+
+			"u.account_name AS `user.account_name`, "+
+			"u.passhash AS `user.passhash`, "+
+			"u.authority AS `user.authority`, "+
+			"u.del_flg AS `user.del_flg`, "+
+			"u.created_at AS `user.created_at` "+
+			"FROM `posts` AS p "+
+			"INNER JOIN `users` AS u ON p.user_id = u.id "+
+			"WHERE u.del_flg = 0 "+
+			"ORDER BY p.created_at DESC "+
+			"LIMIT ?", postsPerPage)
+		if err != nil {
+			return nil, err
+		}
+
+		posts, err := makePosts(results, "", false)
+		if err != nil {
+			return nil, err
+		}
+
+		indexPosts = posts
+		lastUpdated = time.Now()
+
+		return nil, nil
+	})
+
+	indexPostsMutex.RLock()
+	defer indexPostsMutex.RUnlock()
+
+	if err != nil {
+		return nil, err
+	}
+	return indexPosts, nil
+}
+
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	me := getSessionUser(r)
 
-	results := []Post{}
-
-	err := db.Select(&results, "SELECT "+
-		"p.id AS `id`, "+
-		"p.user_id AS `user_id`, "+
-		"p.body AS `body`, "+
-		"p.mime AS `mime`, "+
-		"p.created_at AS `created_at`, "+
-		"u.id AS `user.id`, "+
-		"u.account_name AS `user.account_name`, "+
-		"u.passhash AS `user.passhash`, "+
-		"u.authority AS `user.authority`, "+
-		"u.del_flg AS `user.del_flg`, "+
-		"u.created_at AS `user.created_at` "+
-		"FROM `posts` AS p "+
-		"INNER JOIN `users` AS u ON p.user_id = u.id "+
-		"WHERE u.del_flg = 0 "+
-		"ORDER BY p.created_at DESC "+
-		"LIMIT ?", postsPerPage)
+	posts, err := updateIndexPosts()
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
-	posts, err := makePosts(results, getCSRFToken(r), false)
-	if err != nil {
-		log.Print(err)
-		return
+	for i := range posts {
+		posts[i].CSRFToken = getCSRFToken(r)
 	}
 
 	indexTemplate.Execute(w, struct {
